@@ -1,4 +1,4 @@
-"""Extensions and modifications of cdtools. """
+"""Extensions and modifications of cdtools."""
 
 from ptychoml.cdtools_ext.models import MLAugmentedPtycho
 
