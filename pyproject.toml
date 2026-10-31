@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "cdtools-py>=0.3.2",
+    "dlsia>=0.3.4",
     "dvc>=3.67.1",
     "evidently>=0.7.20",
     "fastapi>=0.128.8",
