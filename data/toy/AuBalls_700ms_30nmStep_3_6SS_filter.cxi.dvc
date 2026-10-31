@@ -1,0 +1,5 @@
+outs:
+- md5: 27b9967015563f3abf8202866e0902e9
+  size: 53621281
+  hash: md5
+  path: AuBalls_700ms_30nmStep_3_6SS_filter.cxi
