@@ -57,9 +57,10 @@ def ch2_to_complex(x: torch.Tensor) -> torch.Tensor:
 
 
 def process_obj(obj, model):
-    if obj.dim() == 2:
+    was_2d = obj.dim() == 2
+    if was_2d:
         obj = obj.unsqueeze(0)  # Shape: (1, H_obj, W_obj)
     obj_processed = model(obj)
-    if obj.dim() == 2:
+    if was_2d:
         return obj_processed.squeeze(0)
     return obj_processed
