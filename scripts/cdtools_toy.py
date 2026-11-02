@@ -25,11 +25,12 @@ def main():
     model = MODELS[args.model].from_dataset(dataset)
     # model.to(device='mps')
 
-    for loss in model.Adam_optimize(10, dataset, lr=0.02, batch_size=10):
+    for loss in model.Adam_optimize(100, dataset, lr=0.01, batch_size=50):
         print(model.report())
 
     model.inspect(dataset)
     model.compare(dataset)
+    model.save_to_h5(Path(__file__).parents[1] / "data/toy/result.h5")
 
     plt.show()
 
