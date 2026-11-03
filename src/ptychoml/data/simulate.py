@@ -120,7 +120,7 @@ def simulate_dataset(
     det_shape = tuple(probe.shape[-2:])
 
     obj_basis = tools.initializers.exit_wave_geometry(
-        t.as_tensor(detector_geometry["basis"]),
+        t.as_tensor(detector_geometry["basis"], dtype=t.float32),
         det_shape,
         wavelength,
         float(detector_geometry["distance"]),
