@@ -35,7 +35,7 @@ def grid_scan(
 ) -> t.Tensor:
     """Raster grid of probe-window corners (in object pixels) covering the object.
 
-    Returns an (N, 2) float tensor of (i, j) positions.
+    Returns an (CROP_SIZE, 2) float tensor of (i, j) positions.
     """
     max_i = obj_shape[0] - probe_shape[0]
     max_j = obj_shape[1] - probe_shape[1]
@@ -89,7 +89,7 @@ def simulate_dataset(
 
     obj: complex (H, W) object transmission function.
     probe: complex (h, w) probe; (h, w) is also the detector shape.
-    pix_positions: (N, 2) probe-window corners in object pixels (i, j).
+    pix_positions: (CROP_SIZE, 2) probe-window corners in object pixels (i, j).
     detector_geometry: dict with 'distance' and 'basis' (as from cdtools).
     """
     probe = t.as_tensor(probe, dtype=t.complex64)
@@ -181,14 +181,14 @@ def simulate_cxi_batch(
 ) -> list[Path]:
     """Simulate a scan for each object in ``objects`` and save one .cxi per object.
 
-    objects: complex (Num, N, N) stack of objects. Object ``i`` is written to
+    objects: complex (CROPS_PER_IMAGE, CROP_SIZE, CROP_SIZE) stack of objects. Object ``i`` is written to
     ``out_dir/{prefix}_{i:05d}.cxi``; see ``simulate_cxi`` for the file layout.
     Returns the list of written paths.
     """
     objects = t.as_tensor(objects)
     if objects.dim() != 3:
         raise ValueError(
-            f"objects must have shape (Num, N, N), got {tuple(objects.shape)}"
+            f"objects must have shape (CROPS_PER_IMAGE, CROP_SIZE, CROP_SIZE), got {tuple(objects.shape)}"
         )
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
