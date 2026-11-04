@@ -191,6 +191,7 @@ def simulate_cxi_batch(
             f"objects must have shape (Num, N, N), got {tuple(objects.shape)}"
         )
     out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
     width = max(5, len(str(len(objects) - 1)))
     paths = []
     for i, obj in enumerate(objects):
