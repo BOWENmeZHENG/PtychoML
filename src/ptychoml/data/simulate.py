@@ -1,4 +1,3 @@
-
 """Simulate ptychography datasets from real-space images.
 
 Each input image is used as the complex object of a cdtools ``FancyPtycho``
@@ -20,7 +19,13 @@ from cdtools.tools import data as cdtdata
 from cdtools.datasets import Ptycho2DDataset
 from cdtools.models import FancyPtycho
 
-__all__ = ["grid_scan", "make_probe", "simulate_dataset", "simulate_cxi"]
+__all__ = [
+    "grid_scan",
+    "make_probe",
+    "simulate_dataset",
+    "simulate_cxi",
+    "simulate_cxi_batch",
+]
 
 
 def grid_scan(
@@ -36,21 +41,33 @@ def grid_scan(
     max_j = obj_shape[1] - probe_shape[1]
     if max_i < 0 or max_j < 0:
         raise ValueError(f"object {obj_shape} is smaller than probe {probe_shape}")
-    ii, jj = np.meshgrid(np.arange(0, max_i + 1, step), np.arange(0, max_j + 1, step), indexing="ij")
+    ii, jj = np.meshgrid(
+        np.arange(0, max_i + 1, step), np.arange(0, max_j + 1, step), indexing="ij"
+    )
     pos = np.stack([ii.ravel(), jj.ravel()], axis=1).astype(np.float32)
     return t.as_tensor(pos)
 
 
-def make_probe(shape: tuple[int, int] = (128, 128), radius: float = 20.0, defocus_phase: float = 0.0) -> t.Tensor:
+def make_probe(
+    shape: tuple[int, int] = (128, 128),
+    radius: float = 20.0,
+    defocus_phase: float = 0.0,
+) -> t.Tensor:
     """Smooth circular-aperture probe (complex64), with optional quadratic phase."""
-    ii, jj = np.meshgrid(np.arange(shape[0]) - shape[0] / 2, np.arange(shape[1]) - shape[1] / 2, indexing="ij")
+    ii, jj = np.meshgrid(
+        np.arange(shape[0]) - shape[0] / 2,
+        np.arange(shape[1]) - shape[1] / 2,
+        indexing="ij",
+    )
     r2 = ii**2 + jj**2
     amp = np.exp(-((r2 / radius**2) ** 2))
     phase = defocus_phase * r2 / radius**2
     return t.as_tensor(amp * np.exp(1j * phase), dtype=t.complex64)
 
 
-def _obj_basis(detector_geometry: dict, det_shape: tuple[int, int], wavelength: float) -> t.Tensor:
+def _obj_basis(
+    detector_geometry: dict, det_shape: tuple[int, int], wavelength: float
+) -> t.Tensor:
     """Object-plane pixel basis implied by the detector geometry."""
     return tools.initializers.exit_wave_geometry(
         t.as_tensor(detector_geometry["basis"], dtype=t.float32),
@@ -99,10 +116,14 @@ def simulate_dataset(
     )
     indices = t.arange(len(pix_positions))
     with t.no_grad():
-        return model.sim_to_dataset((indices, translations), calculation_width=calculation_width)
+        return model.sim_to_dataset(
+            (indices, translations), calculation_width=calculation_width
+        )
 
 
-def _add_obj_and_probe(cxi_file: h5py.File, obj: t.Tensor, probe: t.Tensor, obj_basis: t.Tensor) -> None:
+def _add_obj_and_probe(
+    cxi_file: h5py.File, obj: t.Tensor, probe: t.Tensor, obj_basis: t.Tensor
+) -> None:
     """Store the ground-truth object and probe in an open .cxi file."""
 
     def to_np(x, dtype):
@@ -135,11 +156,45 @@ def simulate_cxi(
     if probe is None:
         probe = make_probe()
     pos = grid_scan(tuple(obj.shape[-2:]), tuple(probe.shape[-2:]), step)
-    dataset = simulate_dataset(obj, probe, pos, ref.wavelength, ref.detector_geometry, **kwargs)
+    dataset = simulate_dataset(
+        obj, probe, pos, ref.wavelength, ref.detector_geometry, **kwargs
+    )
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    obj_basis = _obj_basis(ref.detector_geometry, tuple(probe.shape[-2:]), ref.wavelength)
+    obj_basis = _obj_basis(
+        ref.detector_geometry, tuple(probe.shape[-2:]), ref.wavelength
+    )
     with cdtdata.create_cxi(str(out_path)) as f:
         dataset.to_cxi(f)
         _add_obj_and_probe(f, obj, probe, obj_basis)
     return dataset
+
+
+def simulate_cxi_batch(
+    objects: t.Tensor,
+    out_dir: str | Path,
+    geometry_cxi: str | Path,
+    probe: t.Tensor | None = None,
+    step: int = 4,
+    prefix: str = "sim",
+    **kwargs,
+) -> list[Path]:
+    """Simulate a scan for each object in ``objects`` and save one .cxi per object.
+
+    objects: complex (Num, N, N) stack of objects. Object ``i`` is written to
+    ``out_dir/{prefix}_{i:05d}.cxi``; see ``simulate_cxi`` for the file layout.
+    Returns the list of written paths.
+    """
+    objects = t.as_tensor(objects)
+    if objects.dim() != 3:
+        raise ValueError(
+            f"objects must have shape (Num, N, N), got {tuple(objects.shape)}"
+        )
+    out_dir = Path(out_dir)
+    width = max(5, len(str(len(objects) - 1)))
+    paths = []
+    for i, obj in enumerate(objects):
+        path = out_dir / f"{prefix}_{i:0{width}d}.cxi"
+        simulate_cxi(obj, path, geometry_cxi, probe=probe, step=step, **kwargs)
+        paths.append(path)
+    return paths
