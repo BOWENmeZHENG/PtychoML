@@ -121,7 +121,7 @@ def simulate_cxi(
     out_path: str | Path,
     geometry_cxi: str | Path,
     probe: t.Tensor | None = None,
-    step: int = 8,
+    step: int = 4,
     **kwargs,
 ) -> Ptycho2DDataset:
     """Simulate a scan of ``obj`` and save it to ``out_path`` (.cxi).
