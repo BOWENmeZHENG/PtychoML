@@ -1,52 +1,3 @@
-""" 
-Input: real-space images, different shapes
-
-A few probes: 128 by 128
-
-scan position: grid within the image
-
-physics-based simulation: diffraction pattern generation 
-based on the input images and scan positions   
-
-forward model: applies the physics-based simulation to generate diffraction patterns
-
-cdtools forward model location: 
-.venv/lib/python3.12/site-packages/cdtools/models/base.py
-def forward(self, *args):
-    return self.measurement(self.forward_propagator(self.interaction(*args)))
-
-.venv/lib/python3.12/site-packages/cdtools/models/fancy_ptycho.py
-FancyPtycho needs: wavelength, detector_geometry, obj_basis, probe_guess, obj_guess
-
-Try getting them from data/toy/AuBalls_700ms_30nmStep_3_6SS_filter.cxi
-can from_dataset work??
-dataset = cdtools.datasets.Ptycho2DDataset.from_cxi(str(CXI))
-
-Use: .venv/lib/python3.12/site-packages/cdtools/tools/data/data.py
-get_wavelength, get_detector_geometry, 
-
-wavelength: 1.2400e-09
-
-detector_geometry new corner [0.00768, 0.00768, 0.112]
-{'distance': np.float32(0.112), 'basis': array([[ 0.     , -0.00012],
-       [-0.00012,  0.     ],
-       [ 0.     ,  0.     ]]), 'corner': array([0.00592, 0.00618, 0.112  ])}
-
-obj_basis for a 128 by 128 probe, use 9.0415e-09
-tensor([[ 0.0000e+00, -1.1128e-08],
-        [-1.1128e-08,  0.0000e+00],
-        [ 0.0000e+00,  0.0000e+00]])
-
-bring own probe_guess and obj_guess
-
-Actually, can I use sim_to_dataset to generate??
-
-
-Output: .cxi file for each each image
-
-
-"""
-
 
 """Simulate ptychography datasets from real-space images.
 
@@ -61,9 +12,11 @@ e.g. data/toy/AuBalls_700ms_30nmStep_3_6SS_filter.cxi.
 
 from pathlib import Path
 
+import h5py
 import numpy as np
 import torch as t
 from cdtools import tools
+from cdtools.tools import data as cdtdata
 from cdtools.datasets import Ptycho2DDataset
 from cdtools.models import FancyPtycho
 
@@ -97,6 +50,16 @@ def make_probe(shape: tuple[int, int] = (128, 128), radius: float = 20.0, defocu
     return t.as_tensor(amp * np.exp(1j * phase), dtype=t.complex64)
 
 
+def _obj_basis(detector_geometry: dict, det_shape: tuple[int, int], wavelength: float) -> t.Tensor:
+    """Object-plane pixel basis implied by the detector geometry."""
+    return tools.initializers.exit_wave_geometry(
+        t.as_tensor(detector_geometry["basis"], dtype=t.float32),
+        det_shape,
+        wavelength,
+        float(detector_geometry["distance"]),
+    )
+
+
 def simulate_dataset(
     obj: t.Tensor,
     probe: t.Tensor,
@@ -119,12 +82,7 @@ def simulate_dataset(
         probe = probe[None]  # (modes, h, w)
     det_shape = tuple(probe.shape[-2:])
 
-    obj_basis = tools.initializers.exit_wave_geometry(
-        t.as_tensor(detector_geometry["basis"], dtype=t.float32),
-        det_shape,
-        wavelength,
-        float(detector_geometry["distance"]),
-    )
+    obj_basis = _obj_basis(detector_geometry, det_shape, wavelength)
 
     # pixel -> metres with the same basis the model uses to go back to pixels,
     # so min_translation=0 maps these positions straight onto the object array.
@@ -144,17 +102,34 @@ def simulate_dataset(
         return model.sim_to_dataset((indices, translations), calculation_width=calculation_width)
 
 
+def _add_obj_and_probe(cxi_file: h5py.File, obj: t.Tensor, probe: t.Tensor, obj_basis: t.Tensor) -> None:
+    """Store the ground-truth object and probe in an open .cxi file."""
+
+    def to_np(x, dtype):
+        return t.as_tensor(x).detach().cpu().numpy().astype(dtype)
+
+    entry = cxi_file["entry_1"]
+    image = entry.create_group("image_1")
+    image["data"] = to_np(obj, np.complex64)
+    image["obj_basis"] = to_np(obj_basis, np.float32)
+    source = entry.require_group("instrument_1/source_1")
+    source["probe"] = to_np(probe, np.complex64)
+
+
 def simulate_cxi(
     obj: t.Tensor,
     out_path: str | Path,
     geometry_cxi: str | Path,
     probe: t.Tensor | None = None,
-    step: int = 32,
+    step: int = 8,
     **kwargs,
 ) -> Ptycho2DDataset:
     """Simulate a scan of ``obj`` and save it to ``out_path`` (.cxi).
 
-    Wavelength and detector geometry are read from ``geometry_cxi``.
+    Wavelength and detector geometry are read from ``geometry_cxi``. The ground
+    truth ``obj`` and ``probe`` are stored alongside the diffraction data:
+    ``/entry_1/image_1/data`` (obj), ``/entry_1/image_1/obj_basis`` (object
+    pixel basis, metres) and ``/entry_1/instrument_1/source_1/probe`` (probe).
     """
     ref = Ptycho2DDataset.from_cxi(str(geometry_cxi), load_patterns=False)
     if probe is None:
@@ -163,5 +138,8 @@ def simulate_cxi(
     dataset = simulate_dataset(obj, probe, pos, ref.wavelength, ref.detector_geometry, **kwargs)
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    dataset.to_cxi(str(out_path))
+    obj_basis = _obj_basis(ref.detector_geometry, tuple(probe.shape[-2:]), ref.wavelength)
+    with cdtdata.create_cxi(str(out_path)) as f:
+        dataset.to_cxi(f)
+        _add_obj_and_probe(f, obj, probe, obj_basis)
     return dataset
