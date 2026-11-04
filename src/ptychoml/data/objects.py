@@ -1,8 +1,8 @@
 """Prepare real-space object images from a folder of .tif files.
 
 For every .tif, ``m`` random N-by-N crops are taken and each crop is rotated
-by a random multiple of 90 degrees. The crops are saved raw (``save_objects``)
-and turned into complex objects for ``simulate.py`` by ``to_complex``.
+by a random multiple of 90 degrees. The crops are turned into complex objects
+by ``to_complex`` and saved (``save_objects``) for ``simulate.py``.
 """
 
 from pathlib import Path
@@ -46,47 +46,6 @@ def foreground_fraction(crops: np.ndarray, margin: float = 10.0) -> np.ndarray:
     return (crops > med + margin).mean(axis=(-2, -1))
 
 
-def prepare_objects(
-    root: str | Path,
-    m: int = 4,
-    N: int = 200,
-    seed: int | None = None,
-    min_foreground: float = 0.005,
-    margin: float = 10.0,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Take ``m`` random N-by-N rotated crops from every .tif under ``root``.
-
-    Crops where fewer than ``min_foreground`` of the pixels are more than
-    ``margin`` gray levels above the crop's median are dropped as background-only
-    (set ``min_foreground=0`` to keep everything).
-
-    Returns ``(crops, source)``: crops is (n_kept, N, N) float32 and source[i] is
-    the index of the file (in sorted order) crop i came from, so train/validation
-    splits can be made by file.
-    """
-    files = sorted(p for p in Path(root).iterdir() if p.suffix.lower() in {".tif", ".tiff"})
-    if not files:
-        raise FileNotFoundError(f"no .tif files in {root}")
-    rng = np.random.default_rng(seed)
-    crops = np.concatenate([random_crops(load_image(f), m, N, rng) for f in files])
-    source = np.repeat(np.arange(len(files)), m)
-    keep = foreground_fraction(crops, margin) >= min_foreground
-    return crops[keep], source[keep]
-
-
-def save_objects(path: str | Path, crops: np.ndarray, source: np.ndarray, **meta) -> None:
-    """Write crops, their source-file indices and any metadata (m, N, seed, ...) to a .npz."""
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(path, crops=crops, source=source, **meta)
-
-
-def load_objects(path: str | Path) -> tuple[np.ndarray, np.ndarray]:
-    """Read ``(crops, source)`` back from a file written by ``save_objects``."""
-    with np.load(path) as d:
-        return d["crops"], d["source"]
-
-
 def to_complex(
     crop: np.ndarray,
     phase_max: float = np.pi / 2,
@@ -103,3 +62,47 @@ def to_complex(
     hi = max(hi, lo + 1.0)  # guard against near-empty crops (1 gray level floor)
     img = np.clip((crop - lo) / (hi - lo), 0.0, 1.0)
     return ((1.0 - absorption * img) * np.exp(1j * phase_max * img)).astype(np.complex64)
+
+def prepare_objects(
+    root: str | Path,
+    m: int = 4,
+    N: int = 200,
+    seed: int | None = None,
+    min_foreground: float = 0.005,
+    margin: float = 10.0,
+    phase_max: float = np.pi / 2,
+    absorption: float = 0.3,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Take ``m`` random N-by-N rotated crops from every .tif under ``root`` and make them complex.
+
+    Crops where fewer than ``min_foreground`` of the pixels are more than
+    ``margin`` gray levels above the crop's median are dropped as background-only
+    (set ``min_foreground=0`` to keep everything). The remaining crops are
+    converted with ``to_complex`` (``phase_max``, ``absorption``).
+
+    Returns ``(objects, source)``: objects is (n_kept, N, N) complex64 and source[i]
+    is the index of the file (in sorted order) object i came from, so train/validation
+    splits can be made by file.
+    """
+    files = sorted(p for p in Path(root).iterdir() if p.suffix.lower() in {".tif", ".tiff"})
+    if not files:
+        raise FileNotFoundError(f"no .tif files in {root}")
+    rng = np.random.default_rng(seed)
+    crops = np.concatenate([random_crops(load_image(f), m, N, rng) for f in files])
+    source = np.repeat(np.arange(len(files)), m)
+    keep = foreground_fraction(crops, margin) >= min_foreground
+    objects = np.stack([to_complex(c, phase_max, absorption) for c in crops[keep]])
+    return objects, source[keep]
+
+
+def save_objects(path: str | Path, crops: np.ndarray, source: np.ndarray, **meta) -> None:
+    """Write crops, their source-file indices and any metadata (m, N, seed, ...) to a .npz."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(path, crops=crops, source=source, **meta)
+
+
+def load_objects(path: str | Path) -> tuple[np.ndarray, np.ndarray]:
+    """Read ``(crops, source)`` back from a file written by ``save_objects``."""
+    with np.load(path) as d:
+        return d["crops"], d["source"]
