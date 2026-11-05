@@ -96,7 +96,6 @@ class TestSimulateDataset:
         assert len(ds) == len(pos)
 
 
-
 class TestSimulateCxi:
     def test_writes_diffraction_data_and_ground_truth(self, obj, probe, geometry_cxi, tmp_path):
         out = tmp_path / "nested" / "scan.cxi"
