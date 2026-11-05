@@ -52,9 +52,7 @@ def main(argv: list[str] | None = None) -> None:
     # Prepare complex objects from the raw image dataset and save
     objects, source = prepare_objects(args.raw_data_dir, args.crops_per_image, args.crop_size, args.seed)
     objects_path = args.save_dir / "objects.npz"
-    save_objects(
-        objects_path, objects, source, m=args.crops_per_image, N=args.crop_size, seed=args.seed
-    )
+    save_objects(objects_path, objects, source, m=args.crops_per_image, N=args.crop_size, seed=args.seed)
     logger.info("Prepared %d complex objects from %s and saved to %s", len(objects), args.raw_data_dir, objects_path)
 
     # Simulate .cxi files and save

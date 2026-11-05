@@ -10,7 +10,15 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-__all__ = ["load_image", "random_crops", "foreground_fraction", "prepare_objects", "save_objects", "load_objects", "to_complex"]
+__all__ = [
+    "load_image",
+    "random_crops",
+    "foreground_fraction",
+    "prepare_objects",
+    "save_objects",
+    "load_objects",
+    "to_complex",
+]
 
 
 def load_image(path: str | Path) -> np.ndarray:
@@ -62,6 +70,7 @@ def to_complex(
     hi = max(hi, lo + 1.0)  # guard against near-empty crops (1 gray level floor)
     img = np.clip((crop - lo) / (hi - lo), 0.0, 1.0)
     return ((1.0 - absorption * img) * np.exp(1j * phase_max * img)).astype(np.complex64)
+
 
 def prepare_objects(
     root: str | Path,

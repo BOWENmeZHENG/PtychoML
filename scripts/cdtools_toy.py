@@ -25,7 +25,7 @@ def main():
     model = MODELS[args.model].from_dataset(dataset)
     # model.to(device='mps')
 
-    for loss in model.Adam_optimize(100, dataset, lr=0.01, batch_size=50):
+    for _loss in model.Adam_optimize(100, dataset, lr=0.01, batch_size=50):
         print(model.report())
 
     model.inspect(dataset)
