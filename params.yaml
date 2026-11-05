@@ -1,0 +1,4 @@
+prepare:
+  crops_per_image: 4
+  crop_size: 200
+  seed: 123
