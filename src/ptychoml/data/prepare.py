@@ -35,6 +35,17 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Run the data preparation pipeline.
+
+    Takes random crops from the raw images and makes them complex-valued, then
+    simulates one scan per object. Writes to ``--save-dir``:
+
+    - ``objects.npz``: the complex objects, their source-image indices and the
+      crop parameters (``m``, ``N``, ``seed``).
+    - ``simulated/sim_*.cxi``: one simulated .cxi file per object.
+
+    argv: argument list to parse; defaults to ``sys.argv[1:]`` when ``None``.
+    """
     args = parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
