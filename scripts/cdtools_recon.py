@@ -14,6 +14,7 @@ MODELS = {
 ITERATIONS = 50
 LR = 0.01
 BS = 50
+OBJ_PADDING = 0
 OUT_DIR = Path(__file__).parents[1] / "data/recon"
 
 
@@ -24,7 +25,8 @@ def main():
     parser.add_argument("--iterations", type=int, default=ITERATIONS, help="Number of optimization iterations")
     parser.add_argument("--lr", type=float, default=LR, help="Learning rate")
     parser.add_argument("--batch-size", type=int, default=BS, help="Batch size")
-    parser.add_argument("--device", default=None, help="Torch device, e.g. 'cuda' or 'mps' (default: CPU)")
+    parser.add_argument("--obj-padding", type=int, default=OBJ_PADDING, help="Object padding in pixels around the scanned area")
+    parser.add_argument("--device",default=None, help="Torch device, e.g. 'cuda' or 'mps' (default: CPU)")
     parser.add_argument(
         "--out",
         type=Path,
@@ -38,10 +40,10 @@ def main():
         matplotlib.use("Agg")
     from matplotlib import pyplot as plt
 
-    out_path = args.out or OUT_DIR / f"{args.cxi.stem}_{args.model}.h5"
+    out_path = args.out or OUT_DIR / f"{args.cxi.stem}_{args.model}_iter_{args.iterations}.h5"
 
     dataset = cdtools.datasets.Ptycho2DDataset.from_cxi(str(args.cxi))
-    model = MODELS[args.model].from_dataset(dataset)
+    model = MODELS[args.model].from_dataset(dataset, obj_padding=args.obj_padding)
     if args.device:
         dataset.get_as(device=args.device)
         model.to(device=args.device)
