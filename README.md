@@ -48,15 +48,16 @@ Outputs in `--save-dir`:
 
 The raw images come from the [BBBC002](https://bbbc.broadinstitute.org/BBBC002) Drosophila Kc167 cell dataset.
 
-## Toy reconstruction
+## Reconstruction
 
-`scripts/cdtools_toy.py` reconstructs the toy gold-ball scan in `data/toy/` with either the standard cdtools model or `MLAugmentedPtycho`:
+`scripts/cdtools_recon.py` reconstructs any `.cxi` scan (the toy gold-ball scan in `data/toy/` by default) with either the standard cdtools model or `MLAugmentedPtycho`:
 
 ```bash
-uv run python scripts/cdtools_toy.py --model standard   # or: --model ml
+uv run python scripts/cdtools_recon.py --model standard   # or: --model ml
+uv run python scripts/cdtools_recon.py --cxi data/processed/BBBC002/simulated/sim_0.cxi --device mps --no-plot
 ```
 
-The result is saved to `data/toy/result.h5`.
+Options: `--cxi`, `--model`, `--iterations`, `--lr`, `--batch-size`, `--device`, `--out`, `--no-plot` (see `--help`). The result is saved to `--out`, by default `data/recon/<cxi name>_<model>.h5`.
 
 ## Project layout
 
