@@ -16,10 +16,11 @@ MODELS = {
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", choices=MODELS, default="standard")
+    parser.add_argument("--cxi", type=Path, default=CXI, help="Path to the .cxi file")
+    parser.add_argument("--model", choices=MODELS, default="standard", help="Model to use, either 'standard' or 'ml'")
     args = parser.parse_args()
 
-    dataset = cdtools.datasets.Ptycho2DDataset.from_cxi(str(CXI))
+    dataset = cdtools.datasets.Ptycho2DDataset.from_cxi(str(args.cxi))
     # dataset.get_as(device='mps')
 
     model = MODELS[args.model].from_dataset(dataset)
