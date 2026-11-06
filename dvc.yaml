@@ -1,12 +1,14 @@
-# DVC pipeline. Add stages under `stages:` as the data code in
-# src/ptychoml/data/ takes shape, e.g.:
-#
-# stages:
-#   prepare:
-#     cmd: python -m ptychoml.data.prepare
-#     deps:
-#       - src/ptychoml/data/prepare.py
-#       - data/raw
-#     outs:
-#       - data/processed
-stages: {}
+stages:
+  prepare:
+    cmd: python -m ptychoml.data.prepare
+    deps:
+      - src/ptychoml/data/prepare.py
+      - src/ptychoml/data/objects.py
+      - src/ptychoml/data/simulate.py
+      - data/raw
+    params:
+      - prepare.crops_per_image
+      - prepare.crop_size
+      - prepare.seed
+    outs:
+      - data/processed/BBBC002

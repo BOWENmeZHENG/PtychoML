@@ -35,9 +35,11 @@ Defaults point at the layout below; every path can be overridden (see `--help`).
 | `--geo-cxi-path` | `data/raw/geometries/AuBalls_700ms_30nmStep_3_6SS_filter.cxi` | Geometry `.cxi` to simulate with |
 | `--probe-path` | `data/raw/probes/probe_data_gen_104.npy` | Probe `.npy` file |
 | `--save-dir` | `data/processed/BBBC002` | Output directory |
-| `--crops-per-image` | `4` | Random crops taken per image |
-| `--crop-size` | `200` | Crop side length in pixels |
-| `--seed` | `123` | Random seed |
+| `--crops-per-image` | `prepare.crops_per_image` in `params.yaml` (`4`) | Random crops taken per image |
+| `--crop-size` | `prepare.crop_size` in `params.yaml` (`200`) | Crop side length in pixels |
+| `--seed` | `prepare.seed` in `params.yaml` (`123`) | Random seed |
+
+The `prepare` stage in `dvc.yaml` runs this script with the values from `params.yaml`. `uv run dvc repro` regenerates `data/processed/BBBC002` whenever `data/raw`, the three `ptychoml/data` modules or those params change. Edit `params.yaml` rather than passing flags if you want DVC to track the change.
 
 Outputs in `--save-dir`:
 
@@ -65,7 +67,8 @@ src/ptychoml/
 scripts/           # standalone scripts
 tests/             # pytest unit tests
 data/              # raw, processed and toy data (large files tracked with DVC)
-dvc.yaml           # DVC pipeline (stages to be added)
+dvc.yaml           # DVC pipeline (prepare stage)
+params.yaml        # parameters for the prepare stage
 ```
 
 ## Development

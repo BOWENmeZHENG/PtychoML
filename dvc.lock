@@ -1,0 +1,33 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python -m ptychoml.data.prepare
+    deps:
+    - path: data/raw
+      hash: md5
+      md5: b2ed82afb70e03f6c83ac4017782efa0.dir
+      size: 66945345
+      nfiles: 53
+    - path: src/ptychoml/data/objects.py
+      hash: md5
+      md5: 33af6acc6199188ece04e1a341c14380
+      size: 4420
+    - path: src/ptychoml/data/prepare.py
+      hash: md5
+      md5: a5b3d03b0523c2d76f84b89e6f69aafe
+      size: 3174
+    - path: src/ptychoml/data/simulate.py
+      hash: md5
+      md5: ec1991586d0dbfb02155af24a1235528
+      size: 6795
+    params:
+      params.yaml:
+        prepare.crop_size: 200
+        prepare.crops_per_image: 4
+        prepare.seed: 123
+    outs:
+    - path: data/processed/BBBC002
+      hash: md5
+      md5: 15e6be5e7be87588da19b87480270641.dir
+      size: 4583575096
+      nfiles: 182
