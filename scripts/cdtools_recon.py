@@ -14,7 +14,7 @@ MODELS = {
 ITERATIONS = 50
 LR = 0.01
 BS = 50
-OBJ_PADDING = 0
+OBJ_PADDING = 20
 OUT_DIR = Path(__file__).parents[1] / "data/recon"
 
 
