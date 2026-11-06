@@ -1,10 +1,13 @@
 import argparse
+import logging
 from pathlib import Path
 
 import cdtools
 import matplotlib
 
 from ptychoml.cdtools_ext import MLAugmentedPtycho
+
+logger = logging.getLogger(__name__)
 
 CXI = Path(__file__).parents[1] / "data/toy/AuBalls_700ms_30nmStep_3_6SS_filter.cxi"
 MODELS = {
@@ -55,6 +58,7 @@ def main():
     )
     parser.add_argument("--no-plot", action="store_true", help="Skip plotting (for headless or batch runs)")
     args = parser.parse_args()
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     if any(not 1 <= n <= args.iterations for n in args.snapshot_at):
         parser.error(f"--snapshot-at values must be between 1 and --iterations ({args.iterations})")
 
@@ -77,14 +81,14 @@ def main():
     for epoch, _loss in enumerate(
         model.Adam_optimize(args.iterations, dataset, lr=args.lr, batch_size=args.batch_size), start=1
     ):
-        print(model.report())
+        logger.info(model.report())
         if epoch in args.snapshot_at:
             snapshot_path = out_path.parent / f"{prefix}_iter_{epoch}.h5"
             save_results(model, snapshot_path, plt)
-            print(f"Saved iteration {epoch} snapshot to {snapshot_path}")
+            logger.info("Saved iteration %d snapshot to %s", epoch, snapshot_path)
 
     save_results(model, out_path, plt)
-    print(f"Saved reconstruction to {out_path}")
+    logger.info("Saved reconstruction to %s", out_path)
 
     # if not args.no_plot:
     #     model.inspect(dataset)
