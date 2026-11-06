@@ -31,7 +31,7 @@ def main():
         "--out",
         type=Path,
         default=None,
-        help=f"Output .h5 path (default: {OUT_DIR.name}/<cxi name>_<model>.h5 under {OUT_DIR.parent})",
+        help=f"Output .h5 path (default: {OUT_DIR.name}/<cxi name>_<model>/<cxi name>_<model>_iter_<iterations>.h5 under {OUT_DIR.parent})",
     )
     parser.add_argument(
         "--snapshot-at",
@@ -51,7 +51,7 @@ def main():
     from matplotlib import pyplot as plt
 
     prefix = f"{args.cxi.stem}_{args.model}"
-    out_path = args.out or OUT_DIR / f"{prefix}_iter_{args.iterations}.h5"
+    out_path = args.out or OUT_DIR / prefix / f"{prefix}_iter_{args.iterations}.h5"
 
     dataset = cdtools.datasets.Ptycho2DDataset.from_cxi(str(args.cxi))
     model = MODELS[args.model].from_dataset(dataset, obj_padding=args.obj_padding)
