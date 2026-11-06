@@ -33,14 +33,25 @@ def main():
         default=None,
         help=f"Output .h5 path (default: {OUT_DIR.name}/<cxi name>_<model>.h5 under {OUT_DIR.parent})",
     )
+    parser.add_argument(
+        "--snapshot-at",
+        type=int,
+        nargs="+",
+        default=[],
+        metavar="ITER",
+        help="Also save a reconstruction after these iterations, e.g. '--snapshot-at 5' (same run, so same gauge)",
+    )
     parser.add_argument("--no-plot", action="store_true", help="Skip plotting (for headless or batch runs)")
     args = parser.parse_args()
+    if any(not 1 <= n <= args.iterations for n in args.snapshot_at):
+        parser.error(f"--snapshot-at values must be between 1 and --iterations ({args.iterations})")
 
     if args.no_plot:
         matplotlib.use("Agg")
     from matplotlib import pyplot as plt
 
-    out_path = args.out or OUT_DIR / f"{args.cxi.stem}_{args.model}_iter_{args.iterations}.h5"
+    prefix = f"{args.cxi.stem}_{args.model}"
+    out_path = args.out or OUT_DIR / f"{prefix}_iter_{args.iterations}.h5"
 
     dataset = cdtools.datasets.Ptycho2DDataset.from_cxi(str(args.cxi))
     model = MODELS[args.model].from_dataset(dataset, obj_padding=args.obj_padding)
@@ -48,10 +59,18 @@ def main():
         dataset.get_as(device=args.device)
         model.to(device=args.device)
 
-    for _loss in model.Adam_optimize(args.iterations, dataset, lr=args.lr, batch_size=args.batch_size):
-        print(model.report())
-
     out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # One Adam_optimize call for the whole run: calling it twice would reset the optimizer state.
+    for epoch, _loss in enumerate(
+        model.Adam_optimize(args.iterations, dataset, lr=args.lr, batch_size=args.batch_size), start=1
+    ):
+        print(model.report())
+        if epoch in args.snapshot_at:
+            snapshot_path = out_path.parent / f"{prefix}_iter_{epoch}.h5"
+            model.save_to_h5(snapshot_path)
+            print(f"Saved iteration {epoch} snapshot to {snapshot_path}")
+
     model.save_to_h5(out_path)
     print(f"Saved reconstruction to {out_path}")
 
