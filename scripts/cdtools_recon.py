@@ -18,6 +18,18 @@ OBJ_PADDING = 20
 OUT_DIR = Path(__file__).parents[1] / "data/recon"
 
 
+def save_results(model, h5_path, plt):
+    """Save the model to h5_path, plus object amplitude and phase PNGs next to it."""
+    model.save_to_h5(h5_path)
+    # Crop to the scanned area, like model.inspect, and use the first object mode
+    obj = model.obj.detach().cpu()
+    if obj.dim() > 2:
+        obj = obj[0]
+    obj = obj[model.obj_view_slice]
+    for name, image, cmap in (("amplitude", obj.abs(), "viridis"), ("phase", obj.angle(), "twilight")):
+        plt.imsave(h5_path.with_name(f"{h5_path.stem}_obj_{name}.png"), image.numpy(), cmap=cmap)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Reconstruct a .cxi scan with a cdtools model")
     parser.add_argument("--cxi", type=Path, default=CXI, help="Path to the .cxi file")
@@ -68,16 +80,16 @@ def main():
         print(model.report())
         if epoch in args.snapshot_at:
             snapshot_path = out_path.parent / f"{prefix}_iter_{epoch}.h5"
-            model.save_to_h5(snapshot_path)
+            save_results(model, snapshot_path, plt)
             print(f"Saved iteration {epoch} snapshot to {snapshot_path}")
 
-    model.save_to_h5(out_path)
+    save_results(model, out_path, plt)
     print(f"Saved reconstruction to {out_path}")
 
-    if not args.no_plot:
-        model.inspect(dataset)
-        model.compare(dataset)
-        plt.show()
+    # if not args.no_plot:
+    #     model.inspect(dataset)
+    #     model.compare(dataset)
+    #     plt.show()
 
 
 if __name__ == "__main__":
