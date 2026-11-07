@@ -10,5 +10,6 @@ stages:
       - prepare.crops_per_image
       - prepare.crop_size
       - prepare.seed
+      - prepare.step
     outs:
       - data/processed/BBBC002

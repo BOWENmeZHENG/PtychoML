@@ -37,6 +37,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--crops-per-image", type=int, default=params["crops_per_image"], help="Random crops per image")
     parser.add_argument("--crop-size", type=int, default=params["crop_size"], help="Crop side length in pixels")
     parser.add_argument("--seed", type=int, default=params["seed"], help="Random seed")
+    parser.add_argument("--step", type=int, default=params["step"], help="Scan step between probe positions in pixels")
     return parser.parse_args(argv)
 
 
@@ -64,7 +65,7 @@ def main(argv: list[str] | None = None) -> None:
     # Simulate .cxi files and save
     objects = torch.as_tensor(objects)
     probe = torch.as_tensor(np.load(args.probe_path))
-    simulate_cxi_batch(objects, args.save_dir / "simulated", args.geo_cxi_path, probe)
+    simulate_cxi_batch(objects, args.save_dir / "simulated", args.geo_cxi_path, probe, step=args.step)
 
 
 if __name__ == "__main__":
