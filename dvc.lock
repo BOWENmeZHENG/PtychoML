@@ -1,7 +1,8 @@
 schema: '2.0'
 stages:
   prepare:
-    cmd: python -m ptychoml.data.prepare
+    cmd: python -m ptychoml.data.prepare --save-dir 
+      data/processed/BBBC002_m4_N200_step4_seed123
     deps:
     - path: data/raw
       hash: md5
@@ -14,8 +15,8 @@ stages:
       size: 4420
     - path: src/ptychoml/data/prepare.py
       hash: md5
-      md5: b45b31e087f98ccdd9c1f74eec6fdd23
-      size: 3310
+      md5: 11ff8056f409686ba5afb04b6937cf3c
+      size: 3855
     - path: src/ptychoml/data/simulate.py
       hash: md5
       md5: ec1991586d0dbfb02155af24a1235528
@@ -27,8 +28,8 @@ stages:
         prepare.seed: 123
         prepare.step: 4
     outs:
-    - path: data/processed/BBBC002
+    - path: data/processed/BBBC002_m4_N200_step4_seed123
       hash: md5
-      md5: c2acd15aebf946b7925fcf1086d38bac.dir
-      size: 4583575096
-      nfiles: 182
+      md5: bef35eb672317d283591cba73a6c150c.dir
+      size: 4583575171
+      nfiles: 183

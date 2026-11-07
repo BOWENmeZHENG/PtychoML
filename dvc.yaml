@@ -1,6 +1,6 @@
 stages:
   prepare:
-    cmd: python -m ptychoml.data.prepare
+    cmd: python -m ptychoml.data.prepare --save-dir data/processed/BBBC002_m${prepare.crops_per_image}_N${prepare.crop_size}_step${prepare.step}_seed${prepare.seed}
     deps:
       - src/ptychoml/data/prepare.py
       - src/ptychoml/data/objects.py
@@ -12,4 +12,4 @@ stages:
       - prepare.seed
       - prepare.step
     outs:
-      - data/processed/BBBC002
+      - data/processed/BBBC002_m${prepare.crops_per_image}_N${prepare.crop_size}_step${prepare.step}_seed${prepare.seed}
