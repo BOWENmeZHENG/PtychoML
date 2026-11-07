@@ -79,3 +79,13 @@ uv run pytest      # tests
 uv run ruff check  # lint
 uv run ruff format # format
 ```
+
+### Batch reconstruction for ML training
+
+`scripts/recon_batch.py` reconstructs every `simulated/*.cxi` in a processed folder and saves snapshots of early and late iterations, one `.npz` per scan:
+
+```bash
+uv run python scripts/recon_batch.py BBBC002_m4_N200_step8_seed123 --snapshot-at 1 2 5 10 20 50 --iterations 50 --device mps
+```
+
+Output goes to `data/recon/<data folder>_<model>_iter_<iterations>/recon_*.npz` (existing files are skipped, so interrupted runs resume; use `--start/--stop` to split work across processes). Each file holds `iterations` (K,), `obj` (K, H, W) and `probe` (K, modes, h, w) complex snapshots from the same run (same gauge), the per-iteration `loss`, the ground-truth `gt` (H, W) and the source `cxi` name. `obj` is cropped to the full scanned footprint, so it has the same shape as `gt`.
