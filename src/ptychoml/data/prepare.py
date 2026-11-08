@@ -33,7 +33,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--raw-data-dir", type=Path, default=RAW_DATA_DIR, help="Directory of raw images")
     parser.add_argument("--geo-cxi-path", type=Path, default=GEO_CXI_PATH, help="Geometry .cxi file to simulate with")
     parser.add_argument("--probe-path", type=Path, default=PROBE_PATH, help="Probe .npy file")
-    parser.add_argument("--save-dir", type=Path, required=True, help="Output directory (named by the DVC stage from params)")
+    parser.add_argument(
+        "--save-dir", type=Path, required=True, help="Output directory (named by the DVC stage from params)"
+    )
     parser.add_argument("--crops-per-image", type=int, default=params["crops_per_image"], help="Random crops per image")
     parser.add_argument("--crop-size", type=int, default=params["crop_size"], help="Crop side length in pixels")
     parser.add_argument("--seed", type=int, default=params["seed"], help="Random seed")

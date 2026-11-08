@@ -50,14 +50,16 @@ The raw images come from the [BBBC002](https://bbbc.broadinstitute.org/BBBC002) 
 
 ## Reconstruction
 
-`scripts/cdtools_recon.py` reconstructs any `.cxi` scan (the toy gold-ball scan in `data/toy/` by default) with either the standard cdtools model or `MLAugmentedPtycho`:
+Two tools share the code in `ptychoml.recon.core`: `single` inspects one reconstruction, `batch` (see below) generates the ML training data.
+
+`ptychoml.recon.single` reconstructs any `.cxi` scan (the toy gold-ball scan in `data/toy/` by default) with either the standard cdtools model or `MLAugmentedPtycho`:
 
 ```bash
-uv run python scripts/cdtools_recon.py --model standard   # or: --model ml
-uv run python scripts/cdtools_recon.py --cxi data/processed/BBBC002/simulated/sim_0.cxi --device mps --no-plot
+uv run python -m ptychoml.recon.single --model standard   # or: --model ml
+uv run python -m ptychoml.recon.single --cxi data/processed/BBBC002/simulated/sim_0.cxi --device mps --show
 ```
 
-Options: `--cxi`, `--model`, `--iterations`, `--lr`, `--batch-size`, `--device`, `--out`, `--no-plot` (see `--help`). The result is saved to `--out`, by default `data/recon/<cxi name>_<model>.h5`.
+Options: `--cxi`, `--model`, `--iterations`, `--lr`, `--batch-size`, `--device`, `--out`, `--snapshot-at`, `--show` (see `--help`). The result is saved to `--out`, by default `data/recon/single_recon/<cxi name>_<model>/<cxi name>_<model>_iter_<iterations>.h5`, next to amplitude and phase PNGs and a `_summary.png` with the loss curve and, for simulated scans, the ground truth. `--snapshot-at` also saves earlier iterations of the same run; `--show` opens the summary in a window.
 
 ## Project layout
 
@@ -65,7 +67,7 @@ Options: `--cxi`, `--model`, `--iterations`, `--lr`, `--batch-size`, `--device`,
 src/ptychoml/
   data/            # object preparation (objects.py), scan simulation (simulate.py), pipeline entry point (prepare.py)
   cdtools_ext/     # cdtools model/tool extensions
-scripts/           # standalone scripts
+  recon/           # reconstruction: shared core (core.py), one scan (single.py), whole folder (batch.py)
 tests/             # pytest unit tests
 data/              # raw, processed and toy data (large files tracked with DVC)
 dvc.yaml           # DVC pipeline (prepare stage)
@@ -82,10 +84,10 @@ uv run ruff format # format
 
 ### Batch reconstruction for ML training
 
-`scripts/recon_batch.py` reconstructs every `simulated/*.cxi` in a processed folder and saves snapshots of early and late iterations, one `.npz` per scan:
+`ptychoml.recon.batch` reconstructs every `simulated/*.cxi` in a processed folder and saves the reconstructed complex object at chosen iterations, one `.npy` per scan:
 
 ```bash
-uv run python scripts/recon_batch.py BBBC002_m4_N200_step8_seed123 --snapshot-at 1 2 5 10 20 50 --iterations 50 --device mps
+uv run python -m ptychoml.recon.batch BBBC002_m4_N200_step8_seed123 --snapshot-at 5 50 --iterations 100 --device mps
 ```
 
-Output goes to `data/recon/<data folder>_<model>_iter_<iterations>/recon_*.npz` (existing files are skipped, so interrupted runs resume; use `--start/--stop` to split work across processes). Each file holds `iterations` (K,), `obj` (K, H, W) and `probe` (K, modes, h, w) complex snapshots from the same run (same gauge), the per-iteration `loss`, the ground-truth `gt` (H, W) and the source `cxi` name. `obj` is cropped to the full scanned footprint, so it has the same shape as `gt`.
+Output goes to `data/recon/<data folder>_<model>_iter_<iterations>/recon_*.npy` (existing files are skipped, so interrupted runs resume; use `--start/--stop` to split work across processes). Each file is a complex64 array of shape (K, H, W): the object after each snapshot iteration, all from the same run (same gauge) and cropped to the full scanned footprint, so each has the same shape as the ground truth. Next to each `.npy` are amplitude and phase PNGs of every snapshot (`recon_00000_iter_5_obj_amplitude.png`, `..._obj_phase.png`) for a quick look. The folder also has a `meta.json` with the iterations and settings (a re-run with different settings into the same folder is refused). Files are uncompressed, so they load fast and can be memory-mapped with `np.load(path, mmap_mode="r")`. The ground truth is in `objects.npz` of the processed folder, and `recon_i` matches `sim_i`. To look at a single reconstruction (probe, loss, plots), use `ptychoml.recon.single`.
