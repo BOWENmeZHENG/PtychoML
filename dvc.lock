@@ -1,7 +1,8 @@
 schema: '2.0'
 stages:
-  prepare:
-    cmd: python -m ptychoml.data.prepare
+  process_raw:
+    cmd: python -m ptychoml.data.prepare --save-dir 
+      data/processed/BBBC002_m4_N200_step8_seed123
     deps:
     - path: data/raw
       hash: md5
@@ -14,8 +15,8 @@ stages:
       size: 4420
     - path: src/ptychoml/data/prepare.py
       hash: md5
-      md5: a5b3d03b0523c2d76f84b89e6f69aafe
-      size: 3174
+      md5: 4004d09c21429f4abe670491ac5f2b9d
+      size: 3869
     - path: src/ptychoml/data/simulate.py
       hash: md5
       md5: ec1991586d0dbfb02155af24a1235528
@@ -25,9 +26,49 @@ stages:
         prepare.crop_size: 200
         prepare.crops_per_image: 4
         prepare.seed: 123
+        prepare.step: 8
     outs:
-    - path: data/processed/BBBC002
+    - path: data/processed/BBBC002_m4_N200_step8_seed123
       hash: md5
-      md5: 15e6be5e7be87588da19b87480270641.dir
-      size: 4583575096
-      nfiles: 182
+      md5: 3495c6775fa2d1110b8bf55ee131e6dc.dir
+      size: 1312145721
+      nfiles: 183
+  generate_train_data:
+    cmd: python -m ptychoml.recon.batch 
+      data/processed/BBBC002_m4_N200_step8_seed123 --out-dir 
+      data/recon/training/BBBC002_m4_N200_step8_seed123_standard_iter_100 
+      --model standard --iterations 100 --lr 0.01 --batch-size 50 --obj-padding 
+      20 --snapshot-at 5 50
+    deps:
+    - path: data/processed/BBBC002_m4_N200_step8_seed123
+      hash: md5
+      md5: 3495c6775fa2d1110b8bf55ee131e6dc.dir
+      size: 1312145721
+      nfiles: 183
+    - path: src/ptychoml/cdtools_ext
+      hash: md5
+      md5: 770f13b60a6ce86227822e876f2f8b8b.dir
+      size: 6350
+      nfiles: 6
+    - path: src/ptychoml/recon/batch.py
+      hash: md5
+      md5: e1b9dd5bc453799b9af7194677b2ac6f
+      size: 5568
+    - path: src/ptychoml/recon/core.py
+      hash: md5
+      md5: 4d225bfc5de2b69b543617bbc74e9e8b
+      size: 3632
+    params:
+      params.yaml:
+        recon.batch_size: 50
+        recon.iterations: 100
+        recon.lr: 0.01
+        recon.model: standard
+        recon.obj_padding: 20
+        recon.snapshot_at: 5 50
+    outs:
+    - path: data/recon/training/BBBC002_m4_N200_step8_seed123_standard_iter_100
+      hash: md5
+      md5: 9967101def3dfbbc68a2b038382ce4b5.dir
+      size: 265905233
+      nfiles: 1268

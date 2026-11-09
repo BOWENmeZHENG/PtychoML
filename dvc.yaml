@@ -1,6 +1,6 @@
 stages:
-  prepare:
-    cmd: python -m ptychoml.data.prepare
+  process_raw:
+    cmd: python -m ptychoml.data.prepare --save-dir data/processed/BBBC002_m${prepare.crops_per_image}_N${prepare.crop_size}_step${prepare.step}_seed${prepare.seed}
     deps:
       - src/ptychoml/data/prepare.py
       - src/ptychoml/data/objects.py
@@ -10,5 +10,33 @@ stages:
       - prepare.crops_per_image
       - prepare.crop_size
       - prepare.seed
+      - prepare.step
     outs:
-      - data/processed/BBBC002
+      - data/processed/BBBC002_m${prepare.crops_per_image}_N${prepare.crop_size}_step${prepare.step}_seed${prepare.seed}
+
+  generate_train_data:
+    # Resumable: batch.py skips scans whose output exists and refuses to mix files from different settings.
+    cmd: >-
+      python -m ptychoml.recon.batch data/processed/BBBC002_m${prepare.crops_per_image}_N${prepare.crop_size}_step${prepare.step}_seed${prepare.seed}
+      --out-dir data/recon/training/BBBC002_m${prepare.crops_per_image}_N${prepare.crop_size}_step${prepare.step}_seed${prepare.seed}_${recon.model}_iter_${recon.iterations}
+      --model ${recon.model}
+      --iterations ${recon.iterations}
+      --lr ${recon.lr}
+      --batch-size ${recon.batch_size}
+      --obj-padding ${recon.obj_padding}
+      --snapshot-at ${recon.snapshot_at}
+    deps:
+      - src/ptychoml/recon/batch.py
+      - src/ptychoml/recon/core.py
+      - src/ptychoml/cdtools_ext
+      - data/processed/BBBC002_m${prepare.crops_per_image}_N${prepare.crop_size}_step${prepare.step}_seed${prepare.seed}
+    params:
+      - recon.model
+      - recon.iterations
+      - recon.lr
+      - recon.batch_size
+      - recon.obj_padding
+      - recon.snapshot_at
+    outs:
+      - data/recon/training/BBBC002_m${prepare.crops_per_image}_N${prepare.crop_size}_step${prepare.step}_seed${prepare.seed}_${recon.model}_iter_${recon.iterations}:
+          persist: true  # keep a partial folder when the stage restarts, so an interrupted run resumes
