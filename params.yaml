@@ -10,4 +10,4 @@ recon:
   lr: 0.01
   batch_size: 50
   obj_padding: 20
-  snapshot_at: "5 50"
+  snapshot_at: "5"

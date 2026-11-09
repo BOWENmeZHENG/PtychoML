@@ -38,7 +38,7 @@ stages:
       data/processed/BBBC002_m4_N200_step8_seed123 --out-dir 
       data/recon/training/BBBC002_m4_N200_step8_seed123_standard_iter_100 
       --model standard --iterations 100 --lr 0.01 --batch-size 50 --obj-padding 
-      20 --snapshot-at 5 50
+      20 --snapshot-at 5
     deps:
     - path: data/processed/BBBC002_m4_N200_step8_seed123
       hash: md5
@@ -65,10 +65,10 @@ stages:
         recon.lr: 0.01
         recon.model: standard
         recon.obj_padding: 20
-        recon.snapshot_at: 5 50
+        recon.snapshot_at: '5'
     outs:
     - path: data/recon/training/BBBC002_m4_N200_step8_seed123_standard_iter_100
       hash: md5
-      md5: 9967101def3dfbbc68a2b038382ce4b5.dir
-      size: 265905233
-      nfiles: 1268
+      md5: 2cc2d87e5736337bb532f09880f10576.dir
+      size: 179877933
+      nfiles: 906
