@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 SNAPSHOTS = [5, 50]
 META = "meta.json"
+TRAINING_DIR = OUT_DIR / "training"  # keeps the batch training data apart from the single_recon inspection runs
 
 
 def reconstruct(cxi, snapshot_at, obj_padding=OBJ_PADDING, **kwargs):
@@ -73,7 +74,7 @@ def main(argv: list[str] | None = None) -> None:
         "--out-dir",
         type=Path,
         default=None,
-        help=f"Output folder (default: {OUT_DIR.name}/<data folder name>_<model>_iter_<iterations>)",
+        help=f"Output folder (default: {OUT_DIR.name}/{TRAINING_DIR.name}/<data folder>_<model>_iter_<iterations>)",
     )
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -83,7 +84,7 @@ def main(argv: list[str] | None = None) -> None:
 
     data_dir = args.data_dir if args.data_dir.exists() else PROCESSED_DIR / args.data_dir
     cxis = sorted((data_dir / "simulated").glob("*.cxi"))[args.start : args.stop]
-    out_dir = args.out_dir or OUT_DIR / f"{data_dir.name}_{args.model}_iter_{args.iterations}"
+    out_dir = args.out_dir or TRAINING_DIR / f"{data_dir.name}_{args.model}_iter_{args.iterations}"
     out_dir.mkdir(parents=True, exist_ok=True)
     logger.info("Reconstructing %d scans from %s into %s", len(cxis), data_dir, out_dir)
 
