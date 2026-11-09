@@ -39,7 +39,7 @@ Defaults point at the layout below; every path can be overridden (see `--help`).
 | `--crop-size` | `prepare.crop_size` in `params.yaml` (`200`) | Crop side length in pixels |
 | `--seed` | `prepare.seed` in `params.yaml` (`123`) | Random seed |
 
-The `prepare` stage in `dvc.yaml` runs this script with the values from `params.yaml`. `uv run dvc repro` regenerates `data/processed/BBBC002` whenever `data/raw`, the three `ptychoml/data` modules or those params change. Edit `params.yaml` rather than passing flags if you want DVC to track the change.
+The `process_raw` stage in `dvc.yaml` runs this script with the values from `params.yaml`. `uv run dvc repro` regenerates `data/processed/BBBC002` whenever `data/raw`, the three `ptychoml/data` modules or those params change. Edit `params.yaml` rather than passing flags if you want DVC to track the change.
 
 Outputs in `--save-dir`:
 
@@ -70,8 +70,8 @@ src/ptychoml/
   recon/           # reconstruction: shared core (core.py), one scan (single.py), whole folder (batch.py)
 tests/             # pytest unit tests
 data/              # raw, processed and toy data (large files tracked with DVC)
-dvc.yaml           # DVC pipeline (prepare stage)
-params.yaml        # parameters for the prepare stage
+dvc.yaml           # DVC pipeline (process_raw and generate_train_data stages)
+params.yaml        # parameters for the pipeline stages
 ```
 
 ## Development
