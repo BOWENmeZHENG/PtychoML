@@ -228,3 +228,7 @@ __marimo__/
 # Data files
 *.h5
 *.png
+
+# MLflow tracking store and artifacts
+mlflow.db
+mlruns/
