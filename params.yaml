@@ -11,3 +11,17 @@ recon:
   batch_size: 50
   obj_padding: 20
   snapshot_at: "5"
+
+train:
+  input_iter: 5
+  target_iter: 100
+  val_fraction: 0.2
+  seed: 0
+  epochs: 100
+  batch_size: 8
+  lr: 0.001
+  patience: 20
+  depth: 3
+  base_channels: 16
+  growth_rate: 2
+  hidden_rate: 1

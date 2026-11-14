@@ -47,8 +47,8 @@ stages:
       nfiles: 183
     - path: src/ptychoml/cdtools_ext
       hash: md5
-      md5: 770f13b60a6ce86227822e876f2f8b8b.dir
-      size: 6350
+      md5: 74a49b2717ab6f0cf0ab1b463839cdce.dir
+      size: 8873
       nfiles: 6
     - path: src/ptychoml/recon/batch.py
       hash: md5
@@ -72,3 +72,50 @@ stages:
       md5: 2cc2d87e5736337bb532f09880f10576.dir
       size: 179877933
       nfiles: 906
+  train:
+    cmd: python -m ptychoml.train.train 
+      data/recon/training/BBBC002_m4_N200_step8_seed123_standard_iter_100 --out 
+      models/tunet.pt --metrics metrics/train.json
+    deps:
+    - path: data/processed/BBBC002_m4_N200_step8_seed123/objects.npz
+      hash: md5
+      md5: 328c5fc80b968b16ed0c282d86e87df0
+      size: 3335336
+    - path: data/recon/training/BBBC002_m4_N200_step8_seed123_standard_iter_100
+      hash: md5
+      md5: 2cc2d87e5736337bb532f09880f10576.dir
+      size: 179877933
+      nfiles: 906
+    - path: src/ptychoml/cdtools_ext/tools.py
+      hash: md5
+      md5: 3ab996ae2b3ac6dfbbc7872fd1cb94f8
+      size: 2897
+    - path: src/ptychoml/train
+      hash: md5
+      md5: e1421eac0fbf0ead594c6bb853ab9189.dir
+      size: 46427
+      nfiles: 6
+    params:
+      params.yaml:
+        train:
+          input_iter: 5
+          target_iter: 100
+          val_fraction: 0.2
+          seed: 0
+          epochs: 100
+          batch_size: 8
+          lr: 0.001
+          patience: 20
+          depth: 3
+          base_channels: 16
+          growth_rate: 2
+          hidden_rate: 1
+    outs:
+    - path: metrics/train.json
+      hash: md5
+      md5: 35ff2f21a48a468b083c094a0f241358
+      size: 199
+    - path: models/tunet.pt
+      hash: md5
+      md5: 5d03148fff0abe32ec1c308a9cb34dae
+      size: 493339
