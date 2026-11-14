@@ -40,3 +40,24 @@ stages:
     outs:
       - data/recon/training/BBBC002_m${prepare.crops_per_image}_N${prepare.crop_size}_step${prepare.step}_seed${prepare.seed}_${recon.model}_iter_${recon.iterations}:
           persist: true  # keep a partial folder when the stage restarts, so an interrupted run resumes
+
+  train:
+    # Hyperparameters are read from the `train` section of params.yaml by train.py itself, so they are not repeated here.
+    # Run history (curves, figures) goes to MLflow (mlflow.db, mlruns/), which DVC does not track.
+    cmd: >-
+      python -m ptychoml.train.train
+      data/recon/training/BBBC002_m${prepare.crops_per_image}_N${prepare.crop_size}_step${prepare.step}_seed${prepare.seed}_${recon.model}_iter_${recon.iterations}
+      --out models/tunet.pt
+      --metrics metrics/train.json
+    deps:
+      - src/ptychoml/train
+      - src/ptychoml/cdtools_ext/tools.py
+      - data/recon/training/BBBC002_m${prepare.crops_per_image}_N${prepare.crop_size}_step${prepare.step}_seed${prepare.seed}_${recon.model}_iter_${recon.iterations}
+      - data/processed/BBBC002_m${prepare.crops_per_image}_N${prepare.crop_size}_step${prepare.step}_seed${prepare.seed}/objects.npz  # source image of each crop, for the split
+    params:
+      - train
+    outs:
+      - models/tunet.pt
+    metrics:
+      - metrics/train.json:
+          cache: false  # small, so keep it in git and compare runs with `dvc metrics diff`
