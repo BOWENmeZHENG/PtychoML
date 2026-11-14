@@ -1,0 +1,8 @@
+{
+  "best_epoch": 57,
+  "epochs_run": 77,
+  "val_loss": 0.01864225438071622,
+  "val_psnr": 23.065466944408325,
+  "baseline_val_loss": 0.06709584593772888,
+  "baseline_val_psnr": 17.503494914304397
+}
